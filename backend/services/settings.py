@@ -274,7 +274,7 @@ for _f in SCHEMA_BY_ID["provider_telegram_2"]["fields"]:
 PROVIDER_SECTIONS = ["provider_telegram_1", "provider_telegram_2", "provider_numbers"]
 PAYMENT_SECTIONS = {"auto-upi": "pay_auto_upi", "auto-crypto": "pay_auto_crypto", "manual-upi": "pay_manual_upi", "manual-crypto": "pay_manual_crypto"}
 
-_cache: Dict[str, Dict[str, Any]] = {}
+
 
 
 def defaults(section_id: str) -> Dict[str, Any]:
@@ -286,17 +286,28 @@ def _secret_keys(section_id: str) -> set[str]:
 
 
 async def get_section(section_id: str) -> Dict[str, Any]:
-    """Merged defaults + stored values with secrets decrypted (server-side use only)."""
-    if section_id in _cache:
-        return dict(_cache[section_id])
+    """Read the latest settings directly from MongoDB.
+
+    Do not keep a process-local cache here because Vercel runs multiple
+    serverless instances and admin changes must be visible immediately
+    across all instances.
+    """
+    if section_id not in SCHEMA_BY_ID:
+        raise KeyError(section_id)
+
     doc = await settings_col.find_one({"section": section_id}) or {}
+
     values = defaults(section_id)
     stored = doc.get("values", {})
     secret_keys = _secret_keys(section_id)
+
     for key, value in stored.items():
         if key in values:
-            values[key] = decrypt_secret(value) if key in secret_keys and value else value
-    _cache[section_id] = dict(values)
+            if key in secret_keys and value:
+                values[key] = decrypt_secret(value)
+            else:
+                values[key] = value
+
     return values
 
 
@@ -344,7 +355,7 @@ async def update_section(section_id: str, incoming: Dict[str, Any], actor: str) 
             stored[key] = _coerce(field, value)
         changed.append(key)
     await settings_col.update_one({"section": section_id}, {"$set": {"section": section_id, "values": stored, "updated_at": utcnow().isoformat(), "updated_by": actor}}, upsert=True)
-    _cache.pop(section_id, None)
+ 
     await audit("settings_updated", actor, {"section": section_id, "fields": changed})
     return await admin_view(section_id)
 
@@ -353,7 +364,7 @@ async def clear_secret(section_id: str, key: str, actor: str) -> Dict[str, Any]:
     if key not in _secret_keys(section_id):
         raise KeyError(key)
     await settings_col.update_one({"section": section_id}, {"$unset": {f"values.{key}": ""}, "$set": {"updated_at": utcnow().isoformat(), "updated_by": actor}}, upsert=True)
-    _cache.pop(section_id, None)
+   
     await audit("secret_cleared", actor, {"section": section_id, "field": key})
     return await admin_view(section_id)
 
@@ -397,4 +408,5 @@ async def all_admin_views() -> List[Dict[str, Any]]:
 
 
 def invalidate_cache() -> None:
-    _cache.clear()
+    """Kept for backwards compatibility; settings are no longer cached."""
+    return None
