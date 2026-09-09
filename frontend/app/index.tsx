@@ -2,7 +2,7 @@ import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Animated, BackHandler, Modal, Pressable, Text, View } from "react-native";
+import { Animated, BackHandler, Modal, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BottomNav, ModalSheet, StateBlock, VthIcon } from "@/src/components/vth-ui";
@@ -78,7 +78,19 @@ export default function Index() {
     getNotifications().then((n) => { setNotifications(n.items); setUnread(n.unread); }).catch(() => undefined);
     getLiveUpdates().then(setLiveUpdates);
   }, []);
-  const changeCurrency = useCallback(async (code: string) => { setCurrency(code); setDisplayCurrency(code, settings.currency.usd_rate); await storage.setItem("vth-currency", code); }, [settings.currency.usd_rate]);
+  const changeCurrency = useCallback(
+  async (code: string) => {
+    setCurrency(code);
+
+    setDisplayCurrency(
+      code,
+      settings?.currency?.usd_rate ?? 85
+    );
+
+    await storage.setItem("vth-currency", code);
+  },
+  [settings?.currency?.usd_rate]
+);
 
   const bootstrap = useCallback(async () => {
     setDataLoading(true); setLoadError(null);
@@ -100,7 +112,14 @@ export default function Index() {
   const showToast = useCallback((message: string, tone: "success" | "error" = "success") => { setToast({ message, tone }); telegram.haptic(tone); setTimeout(() => setToast(null), 2600); }, []);
   const copyValue = async (value: string) => { await Clipboard.setStringAsync(value); showToast("Copied to clipboard"); };
   const openLink = (url: string) => telegram.openLink(url);
-  const supportUrl = settings.branding.support_link || (settings.branding.support_username ? `https://t.me/${settings.branding.support_username.replace(/^@/, "")}` : "");
+  const supportUrl =
+  settings?.branding?.support_link ||
+  (settings?.branding?.support_username
+    ? `https://t.me/${settings.branding.support_username.replace(
+        /^@/,
+        ""
+      )}`
+    : "");
   const openSupport = () => supportUrl ? openLink(supportUrl) : showToast("Support contact not configured yet", "error");
 
   const openBell = () => { setBellOpen(true); const ids = notifications.filter((n) => !n.read).map((n) => n.id); if (ids.length) { void markNotificationsRead(ids).then(() => { setUnread(0); setNotifications((items) => items.map((n) => ({ ...n, read: true }))); }); } };
@@ -166,7 +185,19 @@ const useStyles = makeStyles((colors) => ({
   toastText: { color: colors.onSuccess, fontSize: 12, fontWeight: "800", flexShrink: 1 },
   intro: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 },
   introRing: { width: 142, height: 142, borderRadius: 71, borderWidth: 1, borderColor: colors.borderStrong, alignItems: "center", justifyContent: "center", backgroundColor: colors.brandTertiary },
-  introOrb: { width: 86, height: 86, borderRadius: 29, backgroundColor: colors.brandPrimary, alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${colors.brandPrimary}66` },
+  introOrb: {
+  width: 86,
+  height: 86,
+  borderRadius: 29,
+  backgroundColor: colors.brandPrimary,
+  alignItems: "center",
+  justifyContent: "center",
+  shadowColor: colors.brandPrimary,
+  shadowOffset: { width: 0, height: 0 },
+  shadowOpacity: 0.4,
+  shadowRadius: 20,
+  elevation: 10,
+},
   introLogo: { color: colors.onBrandPrimary, fontSize: 50, fontWeight: "900", letterSpacing: -4 },
   introCopy: { alignItems: "center", marginTop: 35 },
   introTitle: { color: colors.onSurface, fontSize: 26, fontWeight: "800", textAlign: "center", letterSpacing: -0.4 },
