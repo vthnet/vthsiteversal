@@ -1,58 +1,16 @@
-// Telegram WebApp bridge.
-// Safe to call outside Telegram (development browser fallback).
-
 import { Platform } from "react-native";
-import * as Haptics from "expo-haptics";
 
 type TelegramWebApp = {
-  initData: string;
-  initDataUnsafe?: {
-    user?: {
-      id: number;
-      first_name: string;
-      username?: string;
-    };
-  };
-  colorScheme?: "light" | "dark";
-  themeParams?: Record<string, string>;
-
-  ready: () => void;
-  expand: () => void;
-
-  close?: () => void;
-
+  initData?: string;
+  initDataUnsafe?: Record<string, unknown>;
+  ready?: () => void;
+  expand?: () => void;
   setHeaderColor?: (color: string) => void;
   setBackgroundColor?: (color: string) => void;
-
-  openTelegramLink?: (url: string) => void;
-  openLink?: (url: string) => void;
-
-  BackButton?: {
-    show: () => void;
-    hide: () => void;
-    onClick: (cb: () => void) => void;
-    offClick: (cb: () => void) => void;
-  };
-
-  HapticFeedback?: {
-    impactOccurred: (
-      style: "light" | "medium" | "heavy"
-    ) => void;
-
-    notificationOccurred: (
-      type: "error" | "success" | "warning"
-    ) => void;
-
-    selectionChanged: () => void;
-  };
 };
 
-
 function getWebApp(): TelegramWebApp | null {
-  if (
-    Platform.OS !== "web" ||
-    typeof window === "undefined"
-  ) {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
     return null;
   }
 
@@ -65,180 +23,110 @@ function getWebApp(): TelegramWebApp | null {
   ).Telegram?.WebApp ?? null;
 }
 
+function readLaunchInitData(): string {
+  if (Platform.OS !== "web" || typeof window === "undefined") {
+    return "";
+  }
+
+  const read = (value: string): string => {
+    if (!value) return "";
+
+    try {
+      const cleaned = value
+        .replace(/^#/, "")
+        .replace(/^\?/, "");
+
+      const params = new URLSearchParams(cleaned);
+
+      return params.get("tgWebAppData") || "";
+    } catch {
+      return "";
+    }
+  };
+
+  const direct =
+    read(window.location.hash) ||
+    read(window.location.search);
+
+  if (direct) {
+    return direct;
+  }
+
+  return "";
+}
+
+function getInitDataNow(): string {
+  const webApp = getWebApp();
+
+  const sdkInitData = webApp?.initData || "";
+
+  if (sdkInitData) {
+    return sdkInitData;
+  }
+
+  return readLaunchInitData();
+}
 
 export const telegram = {
-  /**
-   * Wait until Telegram WebApp has supplied initData.
-   *
-   * This is important because the Telegram bridge can load slightly
-   * after the React application starts.
-   */
+  isInsideTelegram(): boolean {
+    return Boolean(getInitDataNow());
+  },
+
+  getInitData(): string {
+    return getInitDataNow();
+  },
+
   async waitForInitData(
-    timeoutMs = 5000
+    timeoutMs = 15000
   ): Promise<string> {
-    const startedAt = Date.now();
+    if (Platform.OS !== "web" || typeof window === "undefined") {
+      return "";
+    }
 
-    while (Date.now() - startedAt < timeoutMs) {
-      const tg = getWebApp();
+    const started = Date.now();
 
-      if (tg) {
+    while (Date.now() - started < timeoutMs) {
+      const webApp = getWebApp();
+
+      if (webApp) {
         try {
-          tg.ready();
-          tg.expand();
+          webApp.ready?.();
+          webApp.expand?.();
         } catch {
-          // Telegram bridge may still be initializing.
-        }
-
-        const initData = tg.initData ?? "";
-
-        if (initData) {
-          return initData;
+          // Ignore Telegram UI API errors.
         }
       }
 
+      const initData = getInitDataNow();
+
+      if (initData) {
+        return initData;
+      }
+
       await new Promise<void>((resolve) => {
-        setTimeout(resolve, 100);
+        window.setTimeout(resolve, 250);
       });
     }
 
     return "";
   },
 
+  init(backgroundColor?: string) {
+    const webApp = getWebApp();
 
-  /**
-   * Returns true only when Telegram has actually provided
-   * authenticated WebApp initData.
-   */
-  isInsideTelegram(): boolean {
-    return Boolean(getWebApp()?.initData);
-  },
-
-
-  /**
-   * Get raw Telegram WebApp initData.
-   *
-   * This value must be sent to the backend for server-side
-   * HMAC verification.
-   */
-  getInitData(): string {
-    return getWebApp()?.initData ?? "";
-  },
-
-
-  /**
-   * Initialize Telegram WebApp UI.
-   */
-  init(backgroundColor: string) {
-    const tg = getWebApp();
-
-    if (!tg) {
+    if (!webApp) {
       return;
     }
 
     try {
-      tg.ready();
-      tg.expand();
+      webApp.ready?.();
+      webApp.expand?.();
 
-      tg.setHeaderColor?.(backgroundColor);
-      tg.setBackgroundColor?.(backgroundColor);
-    } catch {
-      // Never let Telegram initialization block the app.
-    }
-  },
-
-
-  /**
-   * Telegram Back Button.
-   */
-  setBackButton(
-    visible: boolean,
-    onPress?: () => void
-  ) {
-    const tg = getWebApp();
-
-    if (!tg?.BackButton) {
-      return () => {};
-    }
-
-    if (!visible || !onPress) {
-      tg.BackButton.hide();
-      return () => {};
-    }
-
-    tg.BackButton.onClick(onPress);
-    tg.BackButton.show();
-
-    return () => {
-      tg.BackButton?.offClick(onPress);
-    };
-  },
-
-
-  /**
-   * Open Telegram / external links.
-   */
-  openLink(url: string) {
-    const tg = getWebApp();
-
-    if (tg && url.startsWith("https://t.me/")) {
-      tg.openTelegramLink?.(url);
-      return;
-    }
-
-    if (tg) {
-      tg.openLink?.(url);
-      return;
-    }
-
-    if (
-      Platform.OS === "web" &&
-      typeof window !== "undefined"
-    ) {
-      window.open(url, "_blank");
-    }
-  },
-
-
-  /**
-   * Haptic feedback.
-   */
-  haptic(
-    kind:
-      | "selection"
-      | "light"
-      | "success"
-      | "error" = "light"
-  ) {
-    const tg = getWebApp();
-
-    if (tg?.HapticFeedback) {
-      if (kind === "selection") {
-        tg.HapticFeedback.selectionChanged();
-      } else if (kind === "light") {
-        tg.HapticFeedback.impactOccurred("light");
-      } else {
-        tg.HapticFeedback.notificationOccurred(kind);
+      if (backgroundColor) {
+        webApp.setBackgroundColor?.(backgroundColor);
       }
-
-      return;
-    }
-
-    if (Platform.OS === "web") {
-      return;
-    }
-
-    if (kind === "selection") {
-      void Haptics.selectionAsync();
-    } else if (kind === "light") {
-      void Haptics.impactAsync(
-        Haptics.ImpactFeedbackStyle.Light
-      );
-    } else {
-      void Haptics.notificationAsync(
-        kind === "success"
-          ? Haptics.NotificationFeedbackType.Success
-          : Haptics.NotificationFeedbackType.Error
-      );
+    } catch {
+      // Telegram WebApp methods are optional.
     }
   },
 };

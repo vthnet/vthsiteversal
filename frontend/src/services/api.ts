@@ -114,7 +114,9 @@ async function request<T>(
 // CUSTOMER AUTH
 // ================================================================
 
-export async function ensureCustomerSession(): Promise<{
+export async function ensureCustomerSession(
+  initData?: string
+): Promise<{
   user: UserProfile;
   verified: boolean;
 }> {
@@ -123,7 +125,6 @@ export async function ensureCustomerSession(): Promise<{
     null
   );
 
-  // Try existing customer token first.
   if (customerToken) {
     try {
       const user = await request<UserProfile>(
@@ -142,25 +143,20 @@ export async function ensureCustomerSession(): Promise<{
       }
 
       customerToken = null;
-
-      try {
-        await storage.secureRemove(CUSTOMER_TOKEN_KEY);
-      } catch {
-        // Ignore storage cleanup errors.
-      }
+      await storage.secureSet(
+        CUSTOMER_TOKEN_KEY,
+        null
+      );
     }
   }
 
-  /*
-   * Telegram WebApp can initialize after React starts.
-   * Wait for the bridge before attempting authentication.
-   */
-  const initData = await telegram.waitForInitData(5000);
+  const signedInitData =
+    initData || (await telegram.waitForInitData(15000));
 
-  if (!initData) {
+  if (!signedInitData) {
     throw new ApiError(
       401,
-      "Open this app from the Telegram Mini App button."
+      "Telegram authentication data was not received."
     );
   }
 
@@ -168,12 +164,15 @@ export async function ensureCustomerSession(): Promise<{
     token: string;
     user: UserProfile;
     verified: boolean;
-  }>("/auth/telegram", {
-    method: "POST",
-    body: JSON.stringify({
-      init_data: initData,
-    }),
-  });
+  }>(
+    "/auth/telegram",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        init_data: signedInitData,
+      }),
+    }
+  );
 
   customerToken = result.token;
 
@@ -187,17 +186,6 @@ export async function ensureCustomerSession(): Promise<{
     verified: result.verified,
   };
 }
-
-const customer = <T>(
-  path: string,
-  init?: RequestInit
-) => {
-  return request<T>(
-    path,
-    init,
-    customerToken
-  );
-};
 
 // ================================================================
 // PUBLIC
@@ -463,7 +451,7 @@ export async function adminLogin(
 }
 
 export async function adminTelegramLogin() {
-  const initData = await telegram.waitForInitData(5000);
+  const initData = await telegram.waitForInitData(15000);
 
   if (!initData) {
     throw new ApiError(

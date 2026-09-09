@@ -96,28 +96,22 @@ export default function Index() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [catalog, setCatalog] = useState<Category | null>(null);
-  const [selectedProduct, setSelectedProduct] =
-    useState<Product | null>(null);
-  const [selectedOrder, setSelectedOrder] =
-    useState<Order | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const [policyOpen, setPolicyOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [toast, setToast] = useState<Toast | null>(null);
-  const [announcementDismissed, setAnnouncementDismissed] =
-    useState(false);
+  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
 
-  const [notifications, setNotifications] =
-    useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unread, setUnread] = useState(0);
 
-  const [liveUpdates, setLiveUpdates] =
-    useState<LiveUpdate[]>([]);
-
+  const [liveUpdates, setLiveUpdates] = useState<LiveUpdate[]>([]);
   const [currency, setCurrency] = useState("INR");
 
   // ------------------------------------------------------------
@@ -125,13 +119,10 @@ export default function Index() {
   // ------------------------------------------------------------
   useEffect(() => {
     let active = true;
-
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     (async () => {
-      const seen = Boolean(
-        await storage.getItem("vth-intro-seen", false)
-      );
+      const seen = Boolean(await storage.getItem("vth-intro-seen", false));
 
       timers.push(
         setTimeout(
@@ -238,27 +229,17 @@ export default function Index() {
   // ------------------------------------------------------------
   // BOOTSTRAP
   //
-  // IMPORTANT:
-  // Telegram Desktop/WebView can initialize the Telegram
-  // WebApp bridge slightly after React starts.
-  //
-  // We therefore WAIT for initData before making the
-  // customer authentication request or loading account data.
+  // Telegram Desktop/WebView can initialize the Telegram WebApp
+  // bridge slightly after React starts. Wait for signed initData
+  // before authenticating the customer.
   // ------------------------------------------------------------
   const bootstrap = useCallback(async () => {
     setDataLoading(true);
     setLoadError(null);
 
     try {
-      // ----------------------------------------------------------
-      // STEP 1:
-      // Wait for Telegram WebApp initData.
-      //
-      // 15 seconds gives Telegram Desktop/WebView enough time
-      // to initialize the bridge on slower devices/connections.
-      // ----------------------------------------------------------
-      const telegramInitData =
-        await telegram.waitForInitData(15000);
+      // 1. Wait for the Telegram bridge and capture initData once.
+      const telegramInitData = await telegram.waitForInitData(15000);
 
       if (!telegramInitData) {
         throw new ApiError(
@@ -267,13 +248,10 @@ export default function Index() {
         );
       }
 
-      // Make sure Telegram itself is initialized.
+      // 2. Initialize Telegram UI after the bridge is available.
       telegram.init(colors.surface);
 
-      // ----------------------------------------------------------
-      // STEP 2:
-      // Load public store data only after Telegram is ready.
-      // ----------------------------------------------------------
+      // 3. Load public store configuration.
       const [
         nextSettings,
         nextCategories,
@@ -290,10 +268,7 @@ export default function Index() {
       setCategories(nextCategories);
       setPaymentMethods(nextMethods);
 
-      // ----------------------------------------------------------
-      // STEP 3:
-      // Restore saved currency.
-      // ----------------------------------------------------------
+      // 4. Restore saved currency.
       const savedCurrency = String(
         (await storage.getItem(
           "vth-currency",
@@ -308,19 +283,12 @@ export default function Index() {
         : nextSettings.currency.default;
 
       setCurrency(code);
-
       setDisplayCurrency(
         code,
         nextSettings.currency.usd_rate
       );
 
-      // ----------------------------------------------------------
-      // STEP 4:
-      // Authenticate using the EXACT initData captured above.
-      //
-      // Do not call telegram.getInitData() again here.
-      // This avoids a Telegram WebView timing/race problem.
-      // ----------------------------------------------------------
+      // 5. Authenticate using the exact initData captured above.
       const session = await ensureCustomerSession(
         telegramInitData
       );
@@ -328,10 +296,7 @@ export default function Index() {
       setProfile(session.user);
       setVerified(session.verified);
 
-      // ----------------------------------------------------------
-      // STEP 5:
-      // Now load customer-specific account data.
-      // ----------------------------------------------------------
+      // 6. Load customer-specific account data.
       await refreshAccount();
     } catch (error) {
       const message =
@@ -756,9 +721,7 @@ export default function Index() {
         },
       ]}
     >
-      <View style={styles.content}>
-        {content}
-      </View>
+      <View style={styles.content}>{content}</View>
 
       {!catalog && !selectedOrder && (
         <BottomNav
