@@ -17,6 +17,7 @@ from core.db import client, ensure_indexes
 from core import config
 from routes.admin import router as admin_router
 from routes.public import router as public_router
+from routes.telegram import router as telegram_router
 from services import orders as order_service
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -49,6 +50,7 @@ async def cron_maintenance(request: Request):
     return {"ok": True, "synced": synced, "expired": expired}
 app.include_router(public_router)
 app.include_router(admin_router)
+app.include_router(telegram_router)
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=bool(config.ALLOWED_ORIGINS),
