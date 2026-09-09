@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "buildCommand": "cd frontend && npx expo export --platform web",
+  "outputDirectory": "frontend/dist",
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/maintenance",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

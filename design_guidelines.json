@@ -1,0 +1,193 @@
+{
+  "app_name": "VTH Network / VTH Store",
+  "personality": "6 Glass / Luxe DARK",
+  "personality_one_liner": "A cinematic, obsidian-glass Telegram Mini App marketplace delivering high-performance digital goods with tactile LED lighting and precision dark aesthetics.",
+  "color": {
+    "surface": "#090A0F",
+    "onSurface": "#F4F5F7",
+    "surfaceSecondary": "#131620",
+    "onSurfaceSecondary": "#D1D5DB",
+    "surfaceTertiary": "#1C2030",
+    "onSurfaceTertiary": "#9CA3AF",
+    "surfaceInverse": "#FFFFFF",
+    "onSurfaceInverse": "#090A0F",
+    "brand": "#D946EF",
+    "brandPrimary": "#E11D48",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#F43F5E",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "rgba(225, 29, 72, 0.15)",
+    "onBrandTertiary": "#FB7185",
+    "success": "#10B981",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F59E0B",
+    "onWarning": "#090A0F",
+    "error": "#EF4444",
+    "onError": "#FFFFFF",
+    "info": "#3B82F6",
+    "onInfo": "#FFFFFF",
+    "border": "rgba(255, 255, 255, 0.08)",
+    "borderStrong": "rgba(225, 29, 72, 0.5)",
+    "divider": "rgba(255, 255, 255, 0.06)",
+    "muted": "#9CA3AF",
+    "onBrand": "#FFFFFF"
+  },
+  "typography": {
+    "displayFontFamily": "SpaceGrotesk_700Bold",
+    "textFontFamily": "Inter_400Regular",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous obsidian padding and touch-first vertical rhythms tailored for Telegram WebView.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "3",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": true,
+    "do's": [
+      "Use backdrop blur on sticky navigation and product hero cards",
+      "Layer frosted glass with 80%+ obsidian tint for pristine text contrast",
+      "Incorporate tactile LED edge highlights for active marketplace cards"
+    ],
+    "dont's": [
+      "Never blur body text or form inputs",
+      "Never stack more than two glass layers simultaneously",
+      "Avoid unreadable transparency over dense product grids"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Intro",
+      "purpose": "3-4 second cinematic obsidian intro sequence featuring VTH Network branding and Telegram WebApp status check.",
+      "states": {
+        "loading": "Animating neon obsidian logo pulse and loading session...",
+        "empty": "N/A",
+        "error": "Failed to initialize Telegram WebApp context. Tap to retry."
+      },
+      "layout": "Centered logo with animated particle ring, fade-in typography, automatic transition to Home."
+    },
+    {
+      "name": "Home",
+      "purpose": "Primary digital marketplace hub featuring wallet balance card and four category cards (TG-Lion, LZT Market, TemporaSMS, Verified VTH).",
+      "states": {
+        "loading": "Skeleton grid with shimmering glass card placeholders.",
+        "empty": "No active marketplace products found. Check back soon.",
+        "error": "Failed to fetch live inventory. Retry connection."
+      },
+      "layout": "Vertical scroll with top sticky obsidian header, wallet balance card, category pill filter, and 2-column product grid."
+    },
+    {
+      "name": "MarketplaceListing",
+      "purpose": "Detailed product and country catalog with instant search, sorting, stock states, and filtering.",
+      "states": {
+        "loading": "Skeleton rows reflecting product items.",
+        "empty": "No items match your search criteria. Try a different filter.",
+        "error": "Catalog service unreachable. Tap to reconnect."
+      },
+      "layout": "Top sticky search bar, horizontal sort chips, and vertical scrollable product item rows with stock badges and instant action buttons."
+    },
+    {
+      "name": "ProductDetail",
+      "purpose": "Comprehensive inspection of selected digital good with specs, pricing tiers, purchase policy modal, and checkout trigger.",
+      "states": {
+        "loading": "Hero image shimmer and detail skeleton.",
+        "empty": "Product details unavailable.",
+        "error": "Failed to load product spec. Retry."
+      },
+      "layout": "Hero banner with gradient scrim, specification pills, purchase policy terms accordion, and sticky bottom purchase CTA bar."
+    },
+    {
+      "name": "Orders",
+      "purpose": "Track active and historical digital goods purchases, credentials delivery, and TemporaSMS waiting state.",
+      "states": {
+        "loading": "Skeleton order cards.",
+        "empty": "No orders placed yet. Explore the marketplace to make your first purchase.",
+        "error": "Could not retrieve order history."
+      },
+      "layout": "Segmented control (All / Active / Completed), vertical order list cards with status pills and copy credentials action."
+    },
+    {
+      "name": "Wallet",
+      "purpose": "Manage balance and execute secure recharges across Auto UPI, Auto Crypto, Manual UPI, and Manual Crypto methods.",
+      "states": {
+        "loading": "Wallet balance skeleton and transaction loader.",
+        "empty": "No transaction history recorded.",
+        "error": "Failed to synchronize wallet ledger."
+      },
+      "layout": "Top balance summary card, 4 recharge method action buttons, active verification-pending state tracker, and transaction history feed."
+    },
+    {
+      "name": "Profile",
+      "purpose": "Telegram user session details, VIP tier status, security settings, support, and admin portal gateway.",
+      "states": {
+        "loading": "User profile shimmer.",
+        "empty": "User session not found.",
+        "error": "Failed to load profile settings."
+      },
+      "layout": "Avatar header with Telegram user ID badge, VIP loyalty card, settings list rows, and protected admin portal gateway."
+    },
+    {
+      "name": "AdminPortal",
+      "purpose": "Restricted administrative command center for inventory management, provider sync, and transaction audits.",
+      "states": {
+        "loading": "Admin ledger loading...",
+        "empty": "No administrative logs recorded.",
+        "error": "Unauthorized or connection failed."
+      },
+      "layout": "Restricted access check banner, key metrics summary cards, provider health status toggles, and recent security logs list."
+    }
+  ],
+  "images": {
+    "intro_logo": {
+      "url": "https://images.unsplash.com/photo-1649061658110-b239d2cd1a51?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dark": "https://images.unsplash.com/photo-1649061658110-b239d2cd1a51?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "VTH Network obsidian cyber logo backdrop"
+    },
+    "hero_banner": {
+      "url": "https://images.unsplash.com/photo-1649061658110-b239d2cd1a51?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dark": "https://images.unsplash.com/photo-1649061658110-b239d2cd1a51?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Cyberpunk dark obsidian tech texture"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Build the complete VTH Network / VTH Store Telegram Mini App marketplace with all 8 screens and flows.",
+    "Enforce Glass / Luxe DARK personality with deep obsidian surfaces, frosted glass cards, and crisp crimson/ruby accents.",
+    "Implement the 3-4s introductory cinematic sequence before entering the marketplace home screen.",
+    "Build robust state management for wallet recharges (Auto/Manual UPI & Crypto) with verification pending states.",
+    "Implement TemporaSMS waiting-for-OTP/cancellation architecture and secure credential copy actions.",
+    "Ensure all touch targets are >= 44x44pt and safe area insets are respected across Telegram WebView surfaces.",
+    "Verify WCAG AA contrast on all glass cards with multi-stop gradient scrims and high-contrast typography."
+  ]
+}
